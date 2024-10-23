@@ -480,7 +480,7 @@ class APIScaffold:
                 f,
                 response={
                     'schema': schema,
-                    'status_code': status_code,
+                    'status_code': int(status_code),
                     'description': description,
                     'example': example,
                     'examples': examples,
@@ -515,7 +515,7 @@ class APIScaffold:
                 base_schema: OpenAPISchemaType = current_app.config['BASE_RESPONSE_SCHEMA']
                 error_schema: OpenAPISchemaType = current_app.config['BASE_RESPONSE_ERROR_SCHEMA']
 
-                if status_code.startswith('2'):
+                if 200 <= int(status_code) < 300:
                     if base_schema is not None and status_code != 204:
                         data_key: str = current_app.config['BASE_RESPONSE_DATA_KEY']
                         handle_key_in_object(obj, data_key, schema, many)

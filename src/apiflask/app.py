@@ -1060,9 +1060,10 @@ class APIFlask(APIScaffold, Flask):
                     if isinstance(responses, list):
                         responses: dict[int, str] = {}  # type: ignore
                         for status_code in view_func._spec.get('responses'):
+                            status_code = int(status_code)
                             responses[  # type: ignore
                                 status_code
-                            ] = get_reason_phrase(int(status_code), '')
+                            ] = get_reason_phrase(status_code, '')
                     for status_code, value in responses.items():  # type: ignore
                         status_code: str = str(status_code)  # type: ignore
                         # custom complete response spec
@@ -1083,7 +1084,7 @@ class APIFlask(APIScaffold, Flask):
                                 operation['responses'][status_code]['description'] = description
                             continue
                         # add error response schema for error responses
-                        if status_code.startswith('4') or status_code.startswith('5'):
+                        if 400 <= int(status_code) < 600:
                             schema: SchemaType = self.config['HTTP_ERROR_SCHEMA']  # type: ignore
                             self._add_response_with_schema(
                                 spec, operation, status_code, schema, 'HTTPError', description
@@ -1224,7 +1225,7 @@ class APIFlask(APIScaffold, Flask):
         error_schema: OpenAPISchemaType | None = self.config['BASE_RESPONSE_ERROR_SCHEMA']
         error_key: str = self.config['BASE_RESPONSE_ERROR_KEY']
 
-        if status_code.startswith('2'):
+        if 200 <= int(status_code) < 300:
             if base_schema is not None:
                 base_schema_spec: dict[str, t.Any]
                 if isinstance(base_schema, type):
