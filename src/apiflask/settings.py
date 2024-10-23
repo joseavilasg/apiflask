@@ -50,7 +50,9 @@ AUTH_ERROR_STATUS_CODE: int = 401
 VALIDATION_ERROR_SCHEMA: OpenAPISchemaType = validation_error_schema
 HTTP_ERROR_SCHEMA: OpenAPISchemaType = http_error_schema
 BASE_RESPONSE_SCHEMA: OpenAPISchemaType | None = None
+BASE_RESPONSE_ERROR_SCHEMA: OpenAPISchemaType | None = None
 BASE_RESPONSE_DATA_KEY: str = 'data'
+BASE_RESPONSE_ERROR_KEY: str = 'errors'
 # API docs
 DOCS_FAVICON: str = 'https://apiflask.com/_assets/favicon.png'
 REDOC_USE_GOOGLE_FONT: bool = True

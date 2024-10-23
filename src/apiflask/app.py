@@ -1221,22 +1221,43 @@ class APIFlask(APIScaffold, Flask):
         """
         base_schema: OpenAPISchemaType | None = self.config['BASE_RESPONSE_SCHEMA']
         data_key: str = self.config['BASE_RESPONSE_DATA_KEY']
-        if base_schema is not None:
-            base_schema_spec: dict[str, t.Any]
-            if isinstance(base_schema, type):
-                base_schema_spec = self._ma_plugin.converter.schema2jsonschema(  # type: ignore
-                    base_schema()
-                )
-            elif isinstance(base_schema, dict):
-                base_schema_spec = base_schema
-            else:
-                raise TypeError(_bad_schema_message)
-            if data_key not in base_schema_spec['properties']:  # type: ignore
-                raise RuntimeError(
-                    f'The data key {data_key!r} is not found in the base response schema spec.'
-                )
-            base_schema_spec['properties'][data_key] = schema  # type: ignore
-            schema = base_schema_spec
+        error_schema: OpenAPISchemaType | None = self.config['BASE_RESPONSE_ERROR_SCHEMA']
+        error_key: str = self.config['BASE_RESPONSE_ERROR_KEY']
+
+        if status_code.startswith('2'):
+            if base_schema is not None:
+                base_schema_spec: dict[str, t.Any]
+                if isinstance(base_schema, type):
+                    base_schema_spec = self._ma_plugin.converter.schema2jsonschema(  # type: ignore
+                        base_schema()
+                    )
+                elif isinstance(base_schema, dict):
+                    base_schema_spec = base_schema
+                else:
+                    raise TypeError(_bad_schema_message)
+                if data_key not in base_schema_spec['properties']:  # type: ignore
+                    raise RuntimeError(
+                        f'The data key {data_key!r} is not found in the base response schema spec.'
+                    )
+                base_schema_spec['properties'][data_key] = schema  # type: ignore
+                schema = base_schema_spec
+        else:
+            if error_schema is not None:
+                error_schema_spec: dict[str, t.Any]
+                if isinstance(error_schema, type):
+                    error_schema_spec = self._ma_plugin.converter.schema2jsonschema(  # type: ignore
+                        error_schema()
+                    )
+                elif isinstance(error_schema, dict):
+                    error_schema_spec = error_schema
+                else:
+                    raise TypeError(_bad_schema_message)
+                if error_key not in error_schema_spec['properties']:  # type: ignore
+                    raise RuntimeError(
+                        f'The error key {error_key!r} is not found in the base response schema spec.'
+                    )
+                error_schema_spec['properties'][error_key] = schema  # type: ignore
+                schema = error_schema_spec
 
         operation['responses'][status_code] = {}
         if status_code != '204':

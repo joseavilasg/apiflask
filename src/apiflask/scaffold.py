@@ -501,31 +501,37 @@ class APIScaffold:
                     return obj  # type: ignore
                 if many is _sentinel:
                     many = schema.many  # type: ignore
-                base_schema: OpenAPISchemaType = current_app.config['BASE_RESPONSE_SCHEMA']
-                if base_schema is not None and status_code != 204:
-                    data_key: str = current_app.config['BASE_RESPONSE_DATA_KEY']
 
+                def handle_key_in_object(obj, key, schema, many):
                     if isinstance(obj, dict):
-                        if data_key not in obj:
-                            raise RuntimeError(
-                                f'The data key {data_key!r} is not found in the returned dict.'
-                            )
-                        obj[data_key] = schema.dump(obj[data_key], many=many)  # type: ignore
+                        if key not in obj:
+                            raise RuntimeError(f'The key {key!r} is not found in the returned dict.')
+                        obj[key] = schema.dump(obj[key], many=many)  # type: ignore
                     else:
-                        if not hasattr(obj, data_key):
-                            raise RuntimeError(
-                                f'The data key {data_key!r} is not found in the returned object.'
-                            )
-                        setattr(
-                            obj,
-                            data_key,
-                            schema.dump(getattr(obj, data_key), many=many),  # type: ignore
-                        )
+                        if not hasattr(obj, key):
+                            raise RuntimeError(f'The key {key!r} is not found in the returned object.')
+                        setattr(obj, key, schema.dump(getattr(obj, key), many=many))  # type: ignore
 
-                    data = base_schema().dump(obj)  # type: ignore
+                base_schema: OpenAPISchemaType = current_app.config['BASE_RESPONSE_SCHEMA']
+                error_schema: OpenAPISchemaType = current_app.config['BASE_RESPONSE_ERROR_SCHEMA']
+
+                if status_code.startswith('2'):
+                    if base_schema is not None and status_code != 204:
+                        data_key: str = current_app.config['BASE_RESPONSE_DATA_KEY']
+                        handle_key_in_object(obj, data_key, schema, many)
+                        data = base_schema().dump(obj)  # type: ignore
+                    else:
+                        data = schema.dump(obj, many=many)  # type: ignore
                 else:
-                    data = schema.dump(obj, many=many)  # type: ignore
+                    if error_schema is not None:
+                        error_key: str = current_app.config['BASE_RESPONSE_ERROR_KEY']
+                        handle_key_in_object(obj, error_key, schema, many)
+                        data = error_schema().dump(obj)  # type: ignore
+                    else:
+                        data = schema.dump(obj, many=many)  # type: ignore
+
                 return jsonify(data, *args, **kwargs)
+
 
             @wraps(f)
             def _response(*args: t.Any, **kwargs: t.Any) -> ResponseReturnValueType:
